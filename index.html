@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>奥迪 A5L 数字化门户 - v5.0 全量加强版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        :root {
+            --primary: #0a9dd8;
+            --bg: #0a0a0c;
+            --glass: rgba(20, 20, 22, 0.9);
+            --border: rgba(10, 157, 216, 0.4);
+            --glow: 0 0 40px rgba(10, 157, 216, 0.3);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes pulseGlow {
+            0% {
+                opacity: 0.3;
+            }
+
+            50% {
+                opacity: 0.8;
+            }
+
+            100% {
+                opacity: 0.3;
+            }
+        }
+
+        @keyframes scrollText {
+            0% {
+                transform: translateY(0);
+            }
+
+            100% {
+                transform: translateY(-50%);
+            }
+        }
+
+        body {
+            background: var(--bg);
+            color: #e2e8f0;
+            font-family: 'Inter', 'PingFang SC', sans-serif;
+            min-height: 100vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+            font-size: 32px;
+            animation: fadeIn 1s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .grid-bg {
+            position: fixed;
+            inset: 0;
+            background-image: linear-gradient(var(--border) 1.5px, transparent 1.5px), linear-gradient(90deg, var(--border) 1.5px, transparent 1.5px);
+            background-size: 80px 80px;
+            z-index: 0;
+            opacity: 0.1;
+        }
+
+        .glass-panel {
+            background: var(--glass);
+            border: 2px solid var(--border);
+            backdrop-filter: blur(50px);
+            position: relative;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9);
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .glass-panel::after {
+            content: "";
+            position: absolute;
+            top: -3px;
+            left: -3px;
+            width: 60px;
+            height: 60px;
+            border-top: 6px solid var(--primary);
+            border-left: 6px solid var(--primary);
+            filter: drop-shadow(0 0 20px var(--primary));
+            border-radius: 15px 0 0 0;
+        }
+
+        .app-tile {
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.02);
+            border: 2px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .app-tile:hover {
+            background: rgba(10, 157, 216, 0.08);
+            border-color: var(--primary);
+            transform: scale(1.04) translateY(-15px);
+            box-shadow: var(--glow);
+        }
+
+        .side-stats {
+            animation: slideInRight 0.8s cubic-bezier(0.16, 1, 0.3, 1) calc(var(--delay) * 1s) backwards;
+        }
+
+        .glow-text {
+            text-shadow: 0 0 40px rgba(10, 157, 216, 0.9);
+        }
+
+        .ticker-wrap {
+            height: 120px;
+            overflow: hidden;
+        }
+
+        .ticker-scroll {
+            animation: scrollText 15s linear infinite;
+        }
+
+        .ticker-scroll:hover {
+            animation-play-state: paused;
+        }
+
+        [x-cloak] {
+            display: none !important;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 40px;
+        }
+    </style>
+</head>
+
+<body x-data="portal()" class="flex flex-col min-h-screen select-none relative">
+
+    <div class="grid-bg"></div>
+
+    <!-- 顶栏 (Fixed) -->
+    <header
+        class="h-32 bg-black/80 border-b-2 border-white/10 flex items-center justify-between px-20 z-50 backdrop-blur-3xl sticky top-0 shrink-0">
+        <div class="flex items-center space-x-12">
+            <img src="logo.png" alt="A5L LOGO" class="h-16 w-auto object-contain filter brightness-150">
+            <div class="h-16 w-1 bg-white/20 mx-4"></div>
+            <div class="flex flex-col text-left">
+                <h1 class="text-4xl font-black tracking-[0.4em] text-[#0a9dd8] glow-text uppercase">奥迪 A5L 数字化全量指挥矩阵
+                </h1>
+                <div class="flex items-center gap-6 mt-1">
+                    <span class="text-sm bg-red-600 px-3 py-0.5 rounded font-black text-white italic">REINFORCED
+                        V5.0</span>
+                    <span class="text-xs text-gray-600 font-bold uppercase tracking-widest">Global Tactical Data
+                        Center</span>
+                </div>
+            </div>
+        </div>
+        <div class="flex items-center space-x-16">
+            <div class="flex flex-col items-end">
+                <span class="text-lg uppercase tracking-widest mb-1 opacity-50 font-black">边缘节点延迟</span>
+                <span class="text-white font-black text-4xl">0.02ms <span
+                        class="text-green-500 text-xl">OPTIONAL</span></span>
+            </div>
+            <div class="h-16 w-0.5 bg-white/20"></div>
+            <div class="flex flex-col items-end">
+                <span class="text-lg uppercase tracking-widest mb-1 opacity-50 font-black">作战核心状态</span>
+                <span class="text-green-500 font-black glow-text text-4xl uppercase animate-pulse">Fully Online</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex-1 flex overflow-hidden z-10 p-10 gap-10">
+        <!-- 左侧：战术指标与简报 -->
+        <aside class="w-[500px] flex flex-col gap-10 shrink-0">
+            <!-- [新增] 实时作战简报流 -->
+            <div class="glass-panel p-10 bg-[#0a9dd808] flex flex-col h-[400px]">
+                <div class="flex items-center space-x-6 border-l-8 border-[#0a9dd8] pl-6 mb-8">
+                    <span class="text-2xl font-black text-white uppercase tracking-widest">实时作战简报 (Live)</span>
+                </div>
+                <div class="ticker-wrap relative flex-1">
+                    <div class="ticker-scroll flex flex-col gap-8">
+                        <template x-for="feed in feeds" :key="feed.id">
+                            <div
+                                class="p-6 bg-white/5 border-2 border-white/5 rounded-3xl hover:bg-white/10 transition-colors cursor-default">
+                                <div class="flex justify-between text-base mb-3 font-bold">
+                                    <span class="text-[#0a9dd8]" x-text="feed.node"></span>
+                                    <span class="opacity-30" x-text="feed.time"></span>
+                                </div>
+                                <div class="text-xl font-black text-gray-300 leading-relaxed" x-text="feed.msg"></div>
+                            </div>
+                        </template>
+                        <!-- 重复一份实现循环 -->
+                        <template x-for="feed in feeds" :key="feed.id + '_dup'">
+                            <div class="p-6 bg-white/5 border-2 border-white/5 rounded-3xl">
+                                <div class="flex justify-between text-base mb-3 font-bold">
+                                    <span class="text-[#0a9dd8]" x-text="feed.node"></span>
+                                    <span class="opacity-30" x-text="feed.time"></span>
+                                </div>
+                                <div class="text-xl font-black text-gray-300 leading-relaxed" x-text="feed.msg"></div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 核心数据卡片 -->
+            <div class="flex-1 glass-panel p-10 bg-black/40 overflow-hidden flex flex-col gap-8">
+                <div class="flex items-center space-x-6 border-l-8 border-white/20 pl-6 mb-4">
+                    <span class="text-2xl font-black text-white uppercase tracking-widest">线索流态势</span>
+                </div>
+                <div class="space-y-8 flex-1 overflow-y-auto pr-4 custom-scroll">
+                    <template x-for="(stat, i) in sideStats" :key="stat.label">
+                        <div class="glass-panel p-8 side-stats bg-black/40 border-dashed"
+                            :style="`--delay: ${0.4 + i*0.1}`">
+                            <div
+                                class="text-lg text-gray-500 font-black uppercase tracking-widest mb-4 flex justify-between">
+                                <span x-text="stat.label"></span>
+                                <span class="text-xs italic bg-white/10 px-3 py-1 rounded">VGC_S2</span>
+                            </div>
+                            <div class="flex items-end justify-between">
+                                <span class="text-5xl font-black text-white glow-text" x-text="stat.value"></span>
+                                <span class="text-xl font-bold"
+                                    :class="stat.trend.includes('↑') ? 'text-green-500' : 'text-gray-600'"
+                                    x-text="stat.trend"></span>
+                            </div>
+                            <div class="w-full h-2 bg-white/5 rounded-full mt-6 overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-transparent to-[#0a9dd8]"
+                                    :style="`width: ${stat.percent}%`"></div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 中部：应用主阵列 -->
+        <main class="flex-1 flex flex-col gap-10 h-full overflow-hidden">
+            <div class="grid grid-cols-2 gap-10 flex-1">
+                <template x-for="(app, index) in apps" :key="app.name">
+                    <div @click="window.location.href = app.url"
+                        class="app-tile flex flex-col p-12 rounded-[60px] glass-panel"
+                        :style="`animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${index * 0.1}s backwards`">
+                        <div class="flex items-center justify-between mb-8">
+                            <div class="w-24 h-24 bg-[#0a9dd815] border-2 border-[#0a9dd844] rounded-[30px] flex items-center justify-center text-[#0a9dd8]"
+                                x-html="app.icon"></div>
+                            <div class="flex flex-col items-end">
+                                <span class="text-sm font-black text-gray-600 uppercase tracking-widest">Live
+                                    Load</span>
+                                <span class="text-3xl font-black text-[#0a9dd8]" x-text="app.load + '%'"></span>
+                            </div>
+                        </div>
+                        <h2 class="text-5xl font-black text-white mb-6 uppercase tracking-[0.2em] glow-text"
+                            x-text="app.name"></h2>
+                        <p class="text-2xl text-gray-400 font-bold leading-relaxed mb-10" x-text="app.desc"></p>
+
+                        <!-- [新增] 应用内即时指标 -->
+                        <div class="mt-auto pt-8 border-t-2 border-white/5 grid grid-cols-2 gap-6">
+                            <div class="flex flex-col">
+                                <span class="text-lg text-gray-600 uppercase font-bold">每日流向</span>
+                                <span class="text-3xl font-black text-white" x-text="app.daily"></span>
+                            </div>
+                            <div class="flex flex-col border-l-2 border-white/10 pl-6">
+                                <span class="text-lg text-gray-600 uppercase font-bold">健康索引</span>
+                                <span class="text-3xl font-black text-green-500">OPTIMAL</span>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- [新增] 底部状态条 -->
+            <div
+                class="h-48 glass-panel bg-[#0a9dd805] border-dashed border-2 p-8 flex items-center justify-between px-16">
+                <div class="flex items-center gap-12 font-black">
+                    <span class="text-gray-700 uppercase tracking-widest italic text-2xl">作战节点感知:</span>
+                    <div class="flex gap-4">
+                        <div class="w-6 h-6 bg-green-500 rounded-full animate-ping"></div>
+                        <span class="text-white text-3xl">FAW-VGC-01</span>
+                    </div>
+                    <div class="w-1 h-12 bg-white/10"></div>
+                    <div class="flex gap-4">
+                        <div class="w-6 h-6 bg-[#0a9dd8] rounded-full"></div>
+                        <span class="text-white text-3xl">SAIC-VGC-02</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-12">
+                    <div class="text-right">
+                        <div class="text-lg text-gray-600 font-bold">今日累计清洗量</div>
+                        <div class="text-4xl font-black text-white glow-text">125,842 <span
+                                class="text-xl text-gray-700 ml-2 italic">Units</span></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- [新增] 右侧：战区分布地图 -->
+        <aside class="w-[500px] flex flex-col gap-10 shrink-0">
+            <div class="glass-panel p-10 flex-1 flex flex-col bg-black/40 overflow-hidden">
+                <div class="flex items-center space-x-6 border-l-8 border-white/30 pl-6 mb-8">
+                    <span class="text-2xl font-black text-white uppercase tracking-widest">全国线索密度审计</span>
+                </div>
+
+                <!-- 模拟热力图分布 -->
+                <div
+                    class="flex-1 relative bg-black/30 rounded-[60px] border-2 border-white/5 flex items-center justify-center p-8">
+                    <svg class="w-full h-full opacity-20" viewBox="0 0 400 300" fill="none">
+                        <!-- 简化的中国地图轮廓点阵 -->
+                        <circle cx="100" cy="100" r="10" fill="#0a9dd8" class="animate-pulse"></circle>
+                        <circle cx="250" cy="120" r="40" fill="#0a9dd8" fill-opacity="0.3"></circle>
+                        <circle cx="280" cy="180" r="50" fill="red" fill-opacity="0.4"></circle>
+                        <circle cx="300" cy="100" r="25" fill="#0a9dd8" fill-opacity="0.2"></circle>
+                        <circle cx="150" cy="200" r="15" fill="#0a9dd8" fill-opacity="0.5"></circle>
+                        <path d="M50 50 L350 50 L350 250 L50 250 Z" stroke="white" stroke-opacity="0.1"
+                            stroke-dasharray="8 8"></path>
+                    </svg>
+                    <!-- 实数标签 -->
+                    <div class="absolute inset-0 flex flex-col justify-between p-12">
+                        <div class="flex justify-between items-start">
+                            <div class="bg-black/60 p-4 rounded-3xl border border-white/10">
+                                <div class="text-lg text-gray-500 font-black">华东战区</div>
+                                <div class="text-3xl font-black text-red-500">45.2K</div>
+                            </div>
+                            <div class="bg-black/60 p-4 rounded-3xl border border-white/10">
+                                <div class="text-lg text-gray-500">华南战区</div>
+                                <div class="text-3xl font-black text-[#0a9dd8]">38.1K</div>
+                            </div>
+                        </div>
+                        <div class="flex justify-center">
+                            <div
+                                class="bg-[#0a9dd8] text-black px-10 py-3 rounded-full font-black text-2xl uppercase shadow-2xl">
+                                全量热力同步中</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 space-y-8">
+                    <div class="p-6 bg-white/5 rounded-[30px] border-2 border-white/5">
+                        <div class="text-lg text-gray-600 font-black mb-2 italic uppercase">上汽奥迪 A5L 交付节点</div>
+                        <div class="text-3xl font-black">嘉定.安亭基地 <span
+                                class="text-green-500 text-xl ml-4 font-mono">STABLE</span></div>
+                    </div>
+                    <div class="p-6 bg-white/5 rounded-[30px] border-2 border-white/5">
+                        <div class="text-lg text-gray-600 font-black mb-2 italic uppercase">一汽奥迪 A5L 交付节点</div>
+                        <div class="text-3xl font-black">长春.一汽基地 <span
+                                class="text-[#0a9dd8] text-xl ml-4 font-mono">STABLE</span></div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- 页脚 (Sticky) -->
+    <footer
+        class="h-24 bg-black/80 border-t-2 border-white/10 flex items-center justify-between px-20 z-50 backdrop-blur-3xl sticky bottom-0 shrink-0 mt-auto">
+        <div class="flex items-center space-x-12 text-xl font-bold text-gray-600">
+            <span class="flex items-center gap-4">
+                <div class="w-4 h-4 bg-green-500 rounded-full"></div>
+                VGC 全链路安全审计环境 ACTIVE_SECURE
+            </span>
+        </div>
+        <div class="flex items-center gap-12">
+            <div class="text-xs text-gray-700 font-black uppercase tracking-widest text-right">
+                Digitized Combat Portal<br>Audi A5L Enterprise Edition
+            </div>
+            <div class="text-3xl font-black text-[#0a9dd8] glow-text tracking-[0.3em] uppercase">
+                DIGITAL MATRIX V5.0 FULL-REINFORCED
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function portal() {
+            return {
+                apps: [
+                    { name: '呼叫矩阵配置', desc: '全维度任务导入与策略下发。', url: 'call_task.html', load: 15, daily: 'NEW', icon: '<svg width="60" height="60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>' },
+                    { name: '作战指挥中心', desc: '线索激活任务实时指挥。', url: 'tasks.html', load: 68, daily: '12.5K', icon: '<svg width="60" height="60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>' },
+                    { name: '语义实验室', desc: 'VoC 语义特征挖掘系统。', url: 'robots.html', load: 45, daily: '8.2K', icon: '<svg width="60" height="60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>' },
+                    { name: '全链路监控', desc: '多维延迟与健康度审计。', url: 'monitor.html', load: 82, daily: '2.1M', icon: '<svg width="60" height="60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002-2z"></path></svg>' },
+                    { name: '作战知识库', desc: 'A5L 产品优势对比库。', url: 'kb.html', load: 12, daily: '0.5K', icon: '<svg width="60" height="60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.432.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>' }
+                ],
+                sideStats: [
+                    { label: '线索清洗完成度', value: '88.4%', trend: '↑ 2.1%', percent: 88 },
+                    { label: '语义标签识别率', value: '92.5%', trend: '↑ 0.5%', percent: 92 },
+                    { label: '智驾关注占比', value: '45.2%', trend: '↑ 5.8%', percent: 45 },
+                    { label: '今日转接专家', value: '1,675', trend: 'STABLE', percent: 70 }
+                ],
+                feeds: [
+                    { id: 1, node: 'FAW-SH-01', time: '19:48:10', msg: '拦截到一条对 A5L ADS 3.0 感兴趣的高潜线索。' },
+                    { id: 2, node: 'SAIC-BJ-04', time: '19:48:15', msg: '成功处理来自懂车帝的掀背车型意向咨询。' },
+                    { id: 3, node: 'VGC-NODE-X', time: '19:48:22', msg: '核心链路负载均衡完成，响应延迟优化至 0.01ms。' },
+                    { id: 4, node: 'AUDI-LAB-01', time: '19:48:30', msg: '语义实验室新增 8 条关于保值率的话术策略。' }
+                ]
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>作战知识库 - 奥迪 A5L 数字化门户</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        :root { 
+            --primary: #0a9dd8; 
+            --bg: #111111; 
+            --glass: rgba(22, 22, 24, 0.9);
+            --border: rgba(10, 157, 216, 0.4);
+        }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-50px); } to { opacity: 1; transform: translateX(0); } }
+        body { 
+            background: var(--bg); color: #e2e8f0; 
+            font-family: 'Inter', 'PingFang SC', sans-serif; 
+            min-height: 100vh; overflow-y: auto; overflow-x: hidden;
+            font-size: 32px; /* 字号翻倍 */
+        }
+        .grid-bg { 
+            position: fixed; inset: 0;
+            background-image: radial-gradient(rgba(10, 157, 216, 0.12) 2.5px, transparent 2.5px); 
+            background-size: 60px 60px; z-index: 0; pointer-events: none;
+        }
+        .glass-panel { 
+            background: var(--glass); border: 2px solid var(--border); 
+            backdrop-filter: blur(40px); position: relative; box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .glass-panel::after {
+            content: ""; position: absolute; top: -2px; left: -2px; width: 40px; height: 40px;
+            border-top: 5px solid var(--primary); border-left: 5px solid var(--primary);
+            filter: drop-shadow(0 0 15px var(--primary)); border-radius: 8px 0 0 0;
+        }
+        .tab-active { 
+            background: rgba(10, 157, 216, 0.25); border-color: var(--primary); color: white;
+            box-shadow: inset 0 0 40px rgba(10, 157, 216, 0.2);
+        }
+        .glow-text { text-shadow: 0 0 30px rgba(10, 157, 216, 0.8); }
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 30px; }
+        [x-cloak] { display: none !important; }
+        .back-btn:hover { background: rgba(10, 157, 216, 0.15); color: #0a9dd8; }
+        .fade-in { animation: slideIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
+    </style>
+</head>
+<body x-data="knowledgeBase()" x-init="init()" class="flex flex-col min-h-screen select-none relative">
+
+    <div class="grid-bg"></div>
+
+    <!-- 顶栏 (Sticky) -->
+    <header class="h-32 bg-black/60 border-b-2 border-white/10 flex items-center justify-between px-20 z-50 backdrop-blur-3xl sticky top-0 shrink-0">
+        <div class="flex items-center space-x-12">
+            <div class="flex items-center space-x-8 text-bold">
+                <img src="logo.png" alt="A5L LOGO" class="h-20 w-auto object-contain filter brightness-150">
+                <div class="h-16 w-0.5 bg-white/20 mx-4"></div>
+                <button onclick="window.history.back()" class="back-btn flex items-center px-10 py-4 rounded-[30px] border-2 border-white/15 text-xl text-gray-400 font-black uppercase tracking-widest transition-all">
+                    <svg class="w-8 h-8 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    返回作战门户
+                </button>
+            </div>
+            
+            <div class="h-16 w-0.5 bg-white/20 mx-4"></div>
+            <h1 class="text-3xl font-black tracking-[0.4em] text-[#0a9dd8] glow-text uppercase">奥迪 A5L 作战情报与产品知识库</h1>
+        </div>
+        <div class="flex items-center space-x-16 text-3xl font-black text-gray-500">
+             <div class="flex flex-col items-end">
+                <span class="text-lg uppercase tracking-widest mb-1 opacity-50">情报同步权重</span>
+                <span class="text-white">HIGHEST (VGC_SPEC)</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex-1 flex overflow-hidden p-12 gap-12 z-10">
+        
+        <!-- 左侧：战区导航 -->
+        <aside class="w-[32rem] flex flex-col gap-12">
+            <div class="glass-panel p-12 bg-black/40 flex flex-col gap-10 fade-in" style="animation-delay: 0.1s">
+                 <div class="text-xl font-black text-gray-400 uppercase tracking-[0.3em] pl-4 border-l-4 border-[#0a9dd8]">情报维度</div>
+                 <div class="space-y-6">
+                      <button @click="activeTab = 'config'" :class="activeTab === 'config' ? 'tab-active' : 'text-gray-600 hover:bg-white/10 hover:text-gray-300'" class="w-full p-8 rounded-[40px] border-2 border-transparent flex items-center justify-between transition-all group font-bold">
+                           <span class="text-2xl font-black uppercase tracking-widest">A5L 核心配置/底盘</span>
+                           <svg :class="activeTab === 'config' ? 'text-[#0a9dd8]' : 'text-gray-800'" class="w-8 h-8 transition-transform group-hover:scale-125" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                      </button>
+                      <button @click="activeTab = 'dist'" :class="activeTab === 'dist' ? 'tab-active' : 'text-gray-600 hover:bg-white/10 hover:text-gray-300'" class="w-full p-8 rounded-[40px] border-2 border-transparent flex items-center justify-between transition-all group font-bold">
+                           <span class="text-2xl font-black uppercase tracking-widest">分车型竞争话术</span>
+                           <svg :class="activeTab === 'dist' ? 'text-[#0a9dd8]' : 'text-gray-800'" class="w-8 h-8 transition-transform group-hover:scale-125" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                      </button>
+                 </div>
+            </div>
+
+            <!-- 智驾情报快报 -->
+            <div class="flex-1 glass-panel p-12 bg-black/20 overflow-hidden border-dashed fade-in" style="animation-delay: 0.2s">
+                 <div class="text-xl font-black text-gray-500 uppercase tracking-widest border-b-2 border-white/10 pb-6 mb-10 italic">最新智驾技术审计</div>
+                 <div class="space-y-12">
+                      <div class="flex flex-col gap-6 p-8 bg-white/5 border-2 border-white/10 rounded-[40px] hover:bg-white/10 transition-colors">
+                           <div class="text-lg text-gray-600 font-black uppercase tracking-widest">华为 ADS 3.0 适配权重</div>
+                           <div class="text-4xl text-white font-black glow-text">99.2% <span class="text-lg text-[#0a9dd8] ml-4 font-mono uppercase">已同步</span></div>
+                      </div>
+                      <div class="flex flex-col gap-6 p-8 bg-white/5 border-2 border-white/10 rounded-[40px] hover:bg-white/10 transition-colors">
+                           <div class="text-lg text-gray-600 font-black uppercase tracking-widest">极氪 001 智驾流失风险</div>
+                           <div class="text-4xl text-white font-black glow-text">LOW <span class="text-lg text-green-500 ml-4 font-mono uppercase">受控区域</span></div>
+                      </div>
+                 </div>
+            </div>
+        </aside>
+
+        <!-- 主情报区 -->
+        <main class="flex-1 glass-panel flex flex-col overflow-hidden bg-[#11111166] fade-in" style="animation-delay: 0.3s">
+             
+             <!-- 核心配置 -->
+             <div x-show="activeTab === 'config'" class="flex-1 flex flex-col p-16 overflow-hidden" x-transition:enter="transition ease-out duration-500" x-transition:enter-start="opacity-0 translateY(30px)" x-transition:enter-end="opacity-100 translateY(0)">
+                  <div class="flex justify-between items-center mb-16">
+                       <div>
+                            <h2 class="text-5xl font-black text-white tracking-[0.3em] uppercase glow-text">奥迪 A5L 核心资产规格与底盘审计报告</h2>
+                            <p class="text-xl text-gray-600 font-bold uppercase mt-4">数据源：<span class="text-[#0a9dd8] bg-[#0a9dd815] px-4 py-1.5 rounded-full">VGC_TECH_CENTER_2025</span></p>
+                       </div>
+                  </div>
+                  <div class="grid grid-cols-2 gap-12 flex-1 overflow-y-auto custom-scroll pr-8 pb-12">
+                       <template x-for="c in configSet" :key="c.title">
+                            <div class="p-12 glass-panel bg-black/50 border-dashed hover:border-[#0a9dd855] transition-all group">
+                                 <span class="text-lg text-gray-600 font-black uppercase tracking-widest mb-8 block group-hover:text-gray-400" x-text="c.title"></span>
+                                 <div class="text-3xl font-black text-white glow-text leading-loose" x-text="c.val"></div>
+                                 <div class="mt-8 pt-8 border-t-2 border-white/5 text-lg text-gray-700 font-bold italic" x-text="c.note"></div>
+                            </div>
+                       </template>
+                  </div>
+             </div>
+
+             <!-- 竞争话术 -->
+             <div x-show="activeTab === 'dist'" class="flex-1 flex flex-col p-16 overflow-hidden" x-transition:enter="transition ease-out duration-500" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+                  <div class="flex justify-between items-center mb-16">
+                       <h2 class="text-5xl font-black text-white tracking-[0.3em] uppercase glow-text">面向小米 SU7/蔚来 ET5 的差异化打击策略话术</h2>
+                  </div>
+                  <div class="flex-1 overflow-y-auto custom-scroll space-y-12 pr-8 pb-12">
+                       <template x-for="d in distRules" :key="d.type">
+                            <div class="p-12 bg-black/60 border-2 border-white/10 rounded-[60px] group hover:border-[#0a9dd866] hover:bg-black/80 transition-all shadow-2xl">
+                                 <div class="flex justify-between items-center border-b-2 border-white/5 pb-8 mb-8">
+                                      <span class="text-3xl font-black text-white uppercase tracking-widest" x-text="d.type"></span>
+                                      <span class="text-xl text-[#0a9dd8] font-black uppercase tracking-[0.3em] italic">核心战法</span>
+                                 </div>
+                                 <div class="bg-black/90 p-10 rounded-[40px] border-2 border-white/5 flex flex-col gap-10">
+                                      <p class="text-2xl text-gray-400 leading-relaxed font-bold italic" x-text="d.logic"></p>
+                                      <div class="flex gap-6">
+                                           <template x-for="tag in d.tags" :key="tag">
+                                                <span class="text-lg bg-[#0a9dd815] border-2 border-[#0a9dd833] text-[#0a9dd8] px-8 py-3 rounded-full uppercase font-black tracking-widest" x-text="tag"></span>
+                                           </template>
+                                      </div>
+                                 </div>
+                            </div>
+                       </template>
+                  </div>
+             </div>
+        </main>
+    </div>
+
+    <!-- 全局提示 -->
+    <div id="os-notif" class="fixed bottom-12 right-12 z-[300] flex flex-col items-end gap-5 px-10 pointer-events-none"></div>
+
+    <script>
+        function knowledgeBase() {
+            return {
+                activeTab: 'config',
+                configSet: [
+                    { title: '轴距性能 (Wheelbase)', val: '2965mm / 专属长轴优化', note: '比肩更高一级别豪华轿车，空间优势核心卖点。' },
+                    { title: '动力心脏 (Engine)', val: '第五代 EA888 EVO 2.0T (FAW/SAIC)', note: '大众集团最强燃油核心，适配高功率 48V 轻混系统。' },
+                    { title: '车身架构 (Body)', val: 'Sportback 无框车门 + 掀背尾门 (SAIC)', note: '上汽奥迪车型核心视觉差异，针对年轻客群。' },
+                    { title: '智驾大脑 (Intelligence)', val: '华为乾崑智驾 ADS 3.0', note: '首款搭载华为高阶智驾的奥迪车型，具有极强线索挽回力。' }
+                ],
+                distRules: [
+                    { type: '针对：科技极客 (小米/极氪关注者)', logic: '重点反击：相比纯电新势力，A5L 拥有华为同款 ADS 3.0 智驾，且具备传统豪华品牌的机械素质与保值率，无里程补能焦虑。', tags: ['智驾持平', '保值领先', '油耗优化'] },
+                    { type: '针对：精致家庭 (蔚来/特斯拉对比者)', logic: '强调：2.96 米长轴距带来的行政级后排空间，以及奥迪品牌沉淀的调教品质，非新势力后期 OTA 可比拟的底盘厚重感。', tags: ['空间秒杀', '底盘厚重', '品牌安全'] }
+                ],
+                init() {
+                    this.notify('奥迪 A5L 作战情报库已热更新至 VGC 节点。', 'success');
+                },
+                notify(msg, type = 'info') {
+                    const container = document.getElementById('os-notif');
+                    const el = document.createElement('div');
+                    const colors = { 
+                        info: 'border-[#0a9dd8] text-[#0a9dd8]', 
+                        success: 'border-green-500 text-green-500', 
+                        warning: 'border-yellow-600 text-yellow-600' 
+                    };
+                    el.className = `p-10 px-20 glass-panel text-xl font-black ${colors[type]} transition-all duration-700 translate-x-40 opacity-0 bg-black/95 shadow-2xl pointer-events-auto rounded-[40px]`;
+                    el.innerHTML = `<span class="opacity-40 mr-6">[数据情报]</span> ${msg}`;
+                    container.appendChild(el);
+                    setTimeout(() => el.classList.remove('translate-x-40', 'opacity-0'), 50);
+                    setTimeout(() => { 
+                        el.classList.add('translate-x-40', 'opacity-0'); 
+                        setTimeout(() => el.remove(), 700); 
+                    }, 5000);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

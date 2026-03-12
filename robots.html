@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>语义实验室 - 奥迪 A5L 数字化门户</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        :root { 
+            --primary: #0a9dd8; 
+            --bg: #111111; 
+            --glass: rgba(22, 22, 24, 0.95);
+            --border: rgba(10, 157, 216, 0.5);
+        }
+        body { 
+            background: var(--bg); color: #e2e8f0; 
+            font-family: 'Inter', 'PingFang SC', sans-serif; 
+            min-height: 100vh; overflow-y: auto; overflow-x: hidden;
+            font-size: 32px; 
+            margin: 0;
+        }
+        .grid-bg { 
+            position: fixed; inset: 0;
+            background-image: radial-gradient(rgba(10, 157, 216, 0.15) 3.5px, transparent 3.5px); 
+            background-size: 100px 100px; z-index: 0; pointer-events: none;
+        }
+        .glass-panel { 
+            background: var(--glass); border: 4px solid var(--border); 
+            backdrop-filter: blur(40px); position: relative; box-shadow: 0 40px 100px rgba(0,0,0,0.95);
+        }
+        .glow-text { text-shadow: 0 0 50px rgba(10, 157, 216, 1); }
+        .custom-scroll::-webkit-scrollbar { width: 10px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 50px; }
+        [x-cloak] { display: none !important; }
+        .tag { font-size: 18px; padding: 4px 16px; border-radius: 20px; font-weight: 800; border: 2px solid rgba(10, 157, 216, 0.3); }
+        
+        @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
+        .scanning::before {
+            content: ""; position: absolute; left: 0; width: 100%; height: 6px;
+            background: var(--primary); box-shadow: 0 0 30px var(--primary);
+            animation: scan 4s linear infinite; z-index: 100; pointer-events: none;
+        }
+    </style>
+</head>
+<body x-data="semanticLab()" class="flex flex-col min-h-screen relative">
+    <div class="grid-bg"></div>
+
+    <!-- 顶栏 (Sticky) -->
+    <header class="h-32 bg-black/80 border-b-2 border-white/10 flex items-center justify-between px-20 z-50 backdrop-blur-3xl sticky top-0 shrink-0">
+        <div class="flex items-center space-x-12">
+            <img src="logo.png" alt="A5L LOGO" class="h-20 w-auto object-contain filter brightness-150">
+            <button onclick="window.history.back()" class="flex items-center px-12 py-5 rounded-[40px] border-2 border-white/15 text-2xl text-gray-400 font-black uppercase tracking-widest hover:text-[#0a9dd8] transition-all">
+                返回
+            </button>
+            <h1 class="text-3xl font-black tracking-[0.4em] text-[#0a9dd8] glow-text uppercase">奥迪 A5L 语义实战实验室</h1>
+        </div>
+        <div class="flex items-center gap-12 font-black text-white">
+            <span class="text-4xl text-[#0a9dd8]">98.4%</span>
+            <span class="text-xl opacity-40 uppercase">F1_Score</span>
+        </div>
+    </header>
+
+    <div class="flex-1 flex overflow-hidden p-12 gap-12 z-10">
+        <!-- 左侧：由于内容量大，采用分栏 -->
+        <main class="flex-1 glass-panel flex flex-col p-12 bg-black/60 overflow-hidden scanning">
+            <h2 class="text-4xl font-black text-white glow-text uppercase mb-8 border-l-8 border-[#0a9dd8] pl-8">实时实弹采样流 (Live Sample Stream)</h2>
+            <div class="flex-1 overflow-y-auto custom-scroll pr-4 space-y-10">
+                <template x-for="log in logs" :key="log.id">
+                    <div class="p-10 bg-black/40 border-2 border-white/5 rounded-[60px] hover:border-[#0a9dd866] transition-all">
+                        <div class="flex justify-between items-center mb-6">
+                            <span class="text-2xl text-[#0a9dd8] font-black" x-text="`CASE_${log.id}`"></span>
+                            <span class="text-xl text-gray-600 font-mono" x-text="log.time"></span>
+                        </div>
+                        <div class="p-8 bg-white/5 rounded-[40px] italic text-3xl text-gray-300 leading-relaxed mb-6" x-text="log.content"></div>
+                        <div class="flex flex-wrap gap-4">
+                            <template x-for="tag in log.tags" :key="tag">
+                                <span class="tag text-[#0a9dd8] bg-[#0a9dd811]" x-text="tag"></span>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </main>
+
+        <!-- 右侧：话术与策略 -->
+        <aside class="w-[600px] flex flex-col gap-10">
+            <div class="glass-panel p-10 bg-black/60 flex flex-col h-full overflow-hidden">
+                <h3 class="text-4xl font-black text-white italic mb-10 border-b-2 border-white/10 pb-6 uppercase">官方克隆破冰模版</h3>
+                <div class="flex-1 overflow-y-auto custom-scroll space-y-12 pr-4">
+                    <template x-for="s in scripts" :key="s.id">
+                        <div class="p-8 border-2 border-[#0a9dd833] rounded-[60px] bg-black/40 hover:bg-[#0a9dd805] transition-all">
+                            <h4 class="text-2xl font-black text-[#0a9dd8] mb-6 uppercase" x-text="s.target"></h4>
+                            <p class="text-3xl text-gray-400 font-bold leading-relaxed italic" x-text="s.content"></p>
+                            <div class="mt-8 flex justify-between items-center text-xl text-gray-600 font-black">
+                                <span x-text="s.id"></span>
+                                <span class="text-green-500">READY</span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        function semanticLab() {
+            return {
+                logs: [],
+                scripts: [
+                    { id: 'v.8.1', target: '针对科技博主关注者', content: '“奥迪 A5L 虽然是豪华燃油，但华为 ADS 3.0 的智驾体验是目前行业天花板，您怎么看这种机械素质与智能化的结合？”' },
+                    { id: 'v.8.2', target: '针对追求空间的家庭用户', content: '“目前同级中 A5L 的 2.96 米轴距带来的越级后排体验是核心，您对二排空间的硬性需求有多大？”' },
+                    { id: 'v.8.3', target: '针对关注保值率的用户', content: '“新势力电车虽然配置高，但传统豪华品牌的底盘调教深度和二手残值是隐形资产，您在决策中权重占多少？”' },
+                    { id: 'v.8.4', target: '针对颜值控 (SAIC A5L)', content: '“上汽奥迪车型特有的无框车门和掀背尾门，是目前奥迪家族最年轻化的设计表达，这符合您的审美偏好吗？”' }
+                ],
+                init() {
+                    console.log('Semantic Lab Init...');
+                    const pool = [
+                        { content: "“我还是更喜欢小米 SU7 的座舱，虽然奥迪现在有了华为智驾。”", tags: ["竞品对比", "座舱偏好", "智驾关注"] },
+                        { content: "“2.0T 的动力在现在电车时代够用吗？我比较担心加速感。”", tags: ["动力质疑", "EV对比", "驱动系统"] },
+                        { content: "“后排空间确实很大，比我想象中要好，特别是头部空间。”", tags: ["空间认可", "家庭需求", "行政级"] },
+                        { content: "“既然有了 ADS 3.0，那什么时候可以试驾到最高版本？”", tags: ["试驾意向", "智驾关注", "交付周期"] },
+                        { content: "“我不喜欢无框车门，感觉风噪会很大，有没有普通的款式？”", tags: ["细节偏好", "静谧性担忧", "款式咨询"] },
+                        { content: "“置换补贴现在是多少？我手头有一辆老奔驰 C 级。”", tags: ["置换需求", "价格博弈", "竞品存量"] }
+                    ];
+                    for(let i=0; i<15; i++) {
+                        const base = pool[i % pool.length];
+                        this.logs.push({
+                            id: 5000 + i,
+                            time: new Date().toLocaleTimeString(),
+                            content: base.content,
+                            tags: base.tags
+                        });
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>

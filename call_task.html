@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>呼叫战术配置中心 - 奥迪 A5L 数字化门户</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        :root {
+            --primary: #0a9dd8;
+            --bg: #0a0a0c;
+            --glass: rgba(20, 20, 22, 0.95);
+            --border: rgba(10, 157, 216, 0.4);
+            --glow: 0 0 40px rgba(10, 157, 216, 0.3);
+        }
+
+        @keyframes scan {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+
+        body {
+            background: var(--bg);
+            color: #e2e8f0;
+            font-family: 'Inter', 'PingFang SC', sans-serif;
+            min-height: 100vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+            font-size: 32px;
+        }
+
+        .grid-bg {
+            position: fixed;
+            inset: 0;
+            background-image: radial-gradient(rgba(10, 157, 216, 0.1) 3.5px, transparent 3.5px);
+            background-size: 100px 100px;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .glass-panel {
+            background: var(--glass);
+            border: 4px solid var(--border);
+            backdrop-filter: blur(60px);
+            position: relative;
+            box-shadow: 0 30px 100px rgba(0, 0, 0, 0.9);
+        }
+
+        .glass-panel::after {
+            content: "";
+            position: absolute;
+            top: -4px;
+            left: -4px;
+            width: 60px;
+            height: 60px;
+            border-top: 6px solid var(--primary);
+            border-left: 6px solid var(--primary);
+            filter: drop-shadow(0 0 20px var(--primary));
+            border-radius: 12px 0 0 0;
+        }
+
+        .tab-active {
+            background: rgba(10, 157, 216, 0.25);
+            border-color: var(--primary);
+            color: white;
+            box-shadow: inset 0 0 50px rgba(10, 157, 216, 0.3);
+        }
+
+        .glow-text {
+            text-shadow: 0 0 30px rgba(10, 157, 216, 0.8);
+        }
+
+        .custom-scroll::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 50px;
+        }
+
+        [x-cloak] {
+            display: none !important;
+        }
+
+        /* 开关组件 */
+        .switch {
+            width: 110px;
+            height: 56px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 30px;
+            position: relative;
+            transition: 0.4s;
+            cursor: pointer;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .switch.on {
+            background: var(--primary);
+            border-color: transparent;
+            box-shadow: 0 0 20px var(--primary);
+        }
+
+        .switch::after {
+            content: '';
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: 42px;
+            height: 42px;
+            background: white;
+            border-radius: 50%;
+            transition: 0.4s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .switch.on::after {
+            left: 58px;
+        }
+
+        .input-dark {
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 15px;
+            color: white;
+            transition: all 0.3s;
+        }
+
+        .input-dark:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 20px rgba(10, 157, 216, 0.2);
+        }
+    </style>
+</head>
+
+<body x-data="callCenter()" x-init="init()" class="flex flex-col h-full select-none relative">
+    <div class="grid-bg"></div>
+
+    <!-- 顶栏 -->
+    <header class="h-32 bg-black/99 border-b-2 border-white/10 flex items-center justify-between px-20 z-50 backdrop-blur-3xl sticky top-0 shrink-0">
+        <div class="flex items-center space-x-12">
+            <img src="logo.png" alt="A5L LOGO" class="h-20 w-auto object-contain filter brightness-150">
+            <div class="h-16 w-1 bg-white/20 mx-4"></div>
+            <button onclick="window.location.href='index.html'"
+                class="flex items-center px-12 py-5 rounded-[40px] border-2 border-white/15 text-2xl text-gray-400 font-black uppercase tracking-widest hover:text-[#0a9dd8] hover:border-[#0a9dd8] transition-all">
+                返回指挥门户
+            </button>
+            <h1 class="text-3xl font-black tracking-[0.4em] text-[#0a9dd8] glow-text uppercase ml-6 italic">高阶呼叫战术配置中心 (AI_CMD_MATRIX)</h1>
+        </div>
+        <div class="flex items-center gap-16">
+            <div class="flex flex-col items-end">
+                <span class="text-sm text-gray-600 font-bold uppercase italic tracking-widest">加密传输协议</span>
+                <span class="text-2xl text-green-500 font-mono">SHA-256_ACTIVE</span>
+            </div>
+            <button @click="notify('配置已全量推送到边缘节点', 'success')"
+                class="px-20 py-6 bg-gradient-to-r from-[#0a9dd8] to-[#005bb5] text-white rounded-full font-black text-3xl shadow-[0_20px_50px_rgba(10,157,216,0.3)] hover:scale-105 active:scale-95 transition-all uppercase tracking-widest">部署任务并上线</button>
+        </div>
+    </header>
+
+    <div class="flex-1 flex p-10 gap-10 z-10">
+        <!-- 左侧：任务导入与实时看板 -->
+        <aside class="w-[600px] flex flex-col gap-10 shrink-0">
+            <!-- 任务导入 -->
+            <div class="glass-panel p-12 bg-black/40 flex flex-col gap-10">
+                <div class="flex justify-between items-center border-l-8 border-[#0a9dd8] pl-8 mb-4">
+                    <span class="text-2xl font-black text-white uppercase italic">任务资源生命周期导入</span>
+                    <span class="text-xs bg-white/10 px-4 py-1.5 rounded-full font-bold">API_V3</span>
+                </div>
+                <div @click="notify('已启动全量加密扫描...', 'info')"
+                    class="group border-4 border-dashed border-white/5 rounded-[80px] p-24 flex flex-col items-center justify-center hover:bg-[#0a9dd808] hover:border-[#0a9dd866] transition-all cursor-pointer relative overflow-hidden h-[350px]">
+                    <div class="text-9xl text-gray-800 font-thin mb-8 group-hover:text-[#0a9dd8] transition-colors">+</div>
+                    <div class="text-3xl font-black text-gray-500 group-hover:text-white transition-colors">拖拽线索加密包</div>
+                    <p class="mt-6 text-xl text-gray-700 italic text-center">支持手机号 MD5 加密传输<br>自动过滤重复线索拨打策略</p>
+                </div>
+                <div class="space-y-6 mt-4">
+                    <div class="p-8 bg-white/5 border-2 border-white/5 rounded-[40px] flex justify-between items-center group hover:bg-white/10 transition-all cursor-pointer">
+                        <div class="flex flex-col">
+                            <span class="text-2xl font-black text-gray-300">一汽奥迪_A5L_清洗包</span>
+                            <span class="text-lg text-gray-600 uppercase">12,500 Units | 待激活</span>
+                        </div>
+                        <div class="w-4 h-4 rounded-full bg-yellow-600 animate-pulse"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 实时看板 -->
+            <div class="flex-1 glass-panel p-12 bg-black/30 border-dashed flex flex-col gap-10">
+                <div class="text-2xl font-black text-gray-500 uppercase tracking-widest border-b-2 border-white/5 pb-8 mb-6 italic flex justify-between">
+                    <span>作战执行看板 (Live)</span>
+                    <span class="text-green-500">99.8% READY</span>
+                </div>
+                <div class="grid grid-cols-1 gap-10">
+                    <div class="p-10 bg-black/60 rounded-[50px] border-2 border-white/10 flex flex-col gap-4">
+                        <span class="text-lg text-gray-600 uppercase font-black">实时 ASR 对话准确度</span>
+                        <div class="flex items-end justify-between">
+                            <span class="text-6xl font-black text-white glow-text">96.4%</span>
+                            <span class="text-xl text-green-500 font-bold">↑ 1.2%</span>
+                        </div>
+                    </div>
+                    <div class="p-10 bg-black/60 rounded-[50px] border-2 border-white/10 flex flex-col gap-4">
+                        <span class="text-lg text-gray-600 uppercase font-black">即时高潜意向激活</span>
+                        <div class="flex items-end justify-between">
+                            <span class="text-6xl font-black text-[#0a9dd8] glow-text">1,582</span>
+                            <span class="text-xl text-[#0a9dd8] font-bold italic">RE_TARGETING</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-auto p-10 bg-[#0a9dd808] border-2 border-[#0a9dd833] rounded-[60px] flex flex-col gap-8">
+                    <span class="text-xl text-gray-600 font-black uppercase italic">录音审计与 ASR 下载</span>
+                    <button @click="notify('正在打包近 48 小时通话录音...', 'info')"
+                        class="w-full py-6 bg-white/5 border-2 border-white/10 rounded-full text-2xl font-black hover:bg-white/10 transition-all uppercase tracking-[0.2em] shadow-xl">打包导出全量话单 (含录音)</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 中部/右侧：核心配置矩阵 -->
+        <main class="flex-1 flex flex-col gap-10 h-full overflow-hidden">
+            <div class="glass-panel flex-1 flex flex-col bg-[#11111188] overflow-hidden">
+                <!-- 导航 Tab -->
+                <nav class="flex border-b-4 border-white/5 bg-black/60 p-8 gap-8">
+                    <template x-for="tab in tabs" :key="tab.id">
+                        <button @click="activeTab = tab.id"
+                            :class="activeTab === tab.id ? 'tab-active' : 'text-gray-600 hover:text-gray-300'"
+                            class="px-16 py-8 rounded-full text-3xl font-black uppercase tracking-widest transition-all"
+                            x-text="tab.name"></button>
+                    </template>
+                </nav>
+
+                <!-- 1. 战术策略与分配 Tab -->
+                <div x-show="activeTab === 'tactics'" class="flex-1 p-16 overflow-y-auto custom-scroll space-y-24" x-cloak
+                    x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-20">
+                    <div class="grid grid-cols-2 gap-16">
+                        <!-- 重呼策略 -->
+                        <div class="space-y-12">
+                            <div class="border-l-12 border-[#0a9dd8] pl-8"><span class="text-3xl font-black text-white uppercase italic tracking-widest">拨打与重呼策略配置</span></div>
+                            <div class="glass-panel p-12 bg-black/60 space-y-12">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-2xl font-bold text-gray-400 uppercase">最大拨打尝试次数</span>
+                                    <input type="number" x-model="s_retry_max" class="w-32 input-dark text-4xl font-black text-center">
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-2xl font-bold text-gray-400 uppercase">二次重呼间隔 (s)</span>
+                                    <input type="number" x-model="s_retry_interval" class="w-32 input-dark text-4xl font-black text-center">
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-2xl font-bold text-gray-400 uppercase">支持重複线索全局去重</span>
+                                    <div class="switch" :class="s_dedupe ? 'on' : ''" @click="s_dedupe = !s_dedupe; notify(s_dedupe ? '全局去重已开启' : '已关闭去重逻辑', 'info')"></div>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-2xl font-bold text-gray-400 uppercase">外呼任务一键暂停</span>
+                                    <div class="switch" :class="s_pause ? 'on' : ''" @click="s_pause = !s_pause; notify(s_pause ? '全量外呼任务已暂停' : '任务已重新激活', 'warning')"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- 时间维度策略 -->
+                        <div class="space-y-12">
+                            <div class="border-l-12 border-white/15 pl-8"><span class="text-3xl font-black text-white uppercase italic tracking-widest">分渠道/地域外呼时间窗口</span></div>
+                            <div class="glass-panel p-12 bg-black/40 space-y-10">
+                                <template x-for="slot in timeSlots" :key="slot.region">
+                                    <div class="p-8 bg-white/5 border-2 border-white/5 rounded-[40px] flex justify-between items-center hover:border-[#0a9dd844] transition-all">
+                                        <span class="text-2xl font-black text-gray-500 uppercase" x-text="slot.region"></span>
+                                        <span class="text-3xl font-black text-[#0a9dd8] glow-text" x-text="slot.time"></span>
+                                    </div>
+                                </template>
+                                <button @click="notify('正在拉取跨战区地域负载数据...', 'info')" class="w-full py-6 mt-4 border-4 border-dashed border-white/5 rounded-full text-xl font-black uppercase text-gray-700 hover:text-white transition-colors">+ 添加地域化弹性窗口</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 人工与顾问转接 -->
+                    <div class="space-y-12">
+                        <div class="border-l-12 border-green-500/40 pl-8"><span class="text-3xl font-black text-white uppercase italic tracking-widest">转接人工/销售顾问分配矩阵</span></div>
+                        <div class="grid grid-cols-2 gap-12">
+                            <div class="p-12 glass-panel bg-[#0a9dd805] border-dashed border-2 flex flex-col gap-10">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-2xl text-gray-400 font-bold uppercase">转接触发逻辑</span>
+                                    <span class="text-[#0a9dd8] font-black uppercase italic">意向度 > A级</span>
+                                </div>
+                                <div class="space-y-6">
+                                    <label class="text-sm text-gray-700 font-black uppercase">默认分发路由 (Dealer Router)</label>
+                                    <select class="w-full input-dark text-3xl font-black appearance-none bg-black/80">
+                                        <option>按车型所属基地分发 (FAW/SAIC)</option>
+                                        <option>按客户归属地域智能匹配门店</option>
+                                        <option>分配至总部级专家坐席</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="p-12 glass-panel bg-black/40 border-dashed border-2 flex flex-col justify-center gap-12">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-2xl text-gray-500 font-bold uppercase">支持电话转接至销售</span>
+                                    <div class="switch" :class="s_transfer ? 'on' : ''" @click="s_transfer = !s_transfer; notify(s_transfer ? '销售顾问实时转接已就位' : '已切换为全自动 AI 模式', 'success')"></div>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-2xl text-gray-500 font-bold uppercase">按车型独立配置顾问包</span>
+                                    <div class="switch" :class="s_package ? 'on' : ''" @click="s_package = !s_package; notify('顾问包分配逻辑已更新', 'info')"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. 模型与话术 Tab -->
+                <div x-show="activeTab === 'model'" class="flex-1 p-16 overflow-y-auto custom-scroll space-y-24" x-cloak
+                    x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95">
+                    <div class="grid grid-cols-2 gap-16">
+                        <!-- 意向模型配置 -->
+                        <div class="space-y-12">
+                            <div class="border-l-12 border-red-500/50 pl-8"><span class="text-3xl font-black text-white uppercase italic tracking-widest">高准/高召意向模型自适应</span></div>
+                            <div class="glass-panel p-12 bg-black/95 flex flex-col gap-12">
+                                <div class="flex justify-between items-center bg-white/5 p-8 rounded-[40px]">
+                                    <span class="text-2xl font-bold text-gray-400 uppercase">当前倾向模型</span>
+                                    <div class="flex gap-6">
+                                        <button @click="m_mode = 'prec'; notify('意向识别精度已切换至最高级别', 'success')" :class="m_mode === 'prec' ? 'bg-[#0a9dd8] shadow-2xl' : 'bg-white/5 border-2 border-white/10 text-gray-600'" class="px-12 py-5 rounded-full text-2xl font-black transition-all">高准确 (Prec)</button>
+                                        <button @click="m_mode = 'recall'; notify('模型已调整为激进召回模式', 'warning')" :class="m_mode === 'recall' ? 'bg-[#0a9dd8] shadow-2xl' : 'bg-white/5 border-2 border-white/10 text-gray-600'" class="px-12 py-5 rounded-full text-2xl font-black transition-all">高召回 (Recall)</button>
+                                    </div>
+                                </div>
+                                <div class="space-y-8 min-h-[150px]">
+                                    <div class="text-xl text-gray-600 font-black uppercase tracking-widest flex justify-between">
+                                        <span>模型强化学习过程展示 (Reinforcement)</span>
+                                        <span class="text-white">Batch_8122</span>
+                                    </div>
+                                    <div class="w-full h-6 bg-white/5 rounded-full overflow-hidden flex">
+                                        <div class="h-full bg-gradient-to-r from-red-600 to-[#0a9dd8] animate-pulse transition-all duration-500" :style="`width: ${m_training_progress}%`"></div>
+                                    </div>
+                                    <p class="text-xl text-gray-700 italic">模型当前通过 8,000+ 对话样本进行特征强化，意向判定置信度已达 92.5%</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- 动态话术 -->
+                        <div class="space-y-12">
+                            <div class="border-l-12 border-white/20 pl-8"><span class="text-3xl font-black text-white uppercase italic tracking-widest">支持车型/价格参数自定义拼接</span></div>
+                            <div class="glass-panel p-12 bg-[#0a9dd805] h-[450px] flex flex-col gap-8">
+                                <div class="flex-1 overflow-y-auto custom-scroll pr-6 space-y-10">
+                                    <div class="p-8 bg-black/60 border-2 border-[#0a9dd844] rounded-[50px] relative">
+                                        <div class="absolute -top-4 left-10 bg-[#0a9dd8] text-white text-base font-black px-6 py-1 rounded-full uppercase">版本 V8.5 (主力)</div>
+                                        <div class="text-2xl text-gray-400 font-bold leading-relaxed italic mt-4">“您好，是 <span class="text-[#0a9dd8]">{{客户姓名}}</span> 老师吗？了解到您近期在关注 <span class="text-white">{{奥迪_A5L}}</span>，目前该配置自定义价格约 <span class="text-green-500">{{自定义价格}}</span> 左右...”</div>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-6 shrink-0">
+                                    <button @click="notify('正在初始化多版本话术编辑器...', 'info')" class="py-5 bg-white/5 border-2 border-white/10 rounded-full text-xl font-black uppercase text-gray-500 hover:text-white transition-all">+ 新增话术仓库</button>
+                                    <button @click="notify('已进入参数配置矩阵', 'success')" class="py-5 bg-[#0a9dd815] border-2 border-[#0a9dd855] rounded-full text-xl font-black uppercase text-[#0a9dd8]">+ 配置参数变量</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 智能标签矩阵 -->
+                    <div class="space-y-12">
+                        <div class="border-l-12 border-[#0a9dd8] pl-8 flex justify-between items-center">
+                            <span class="text-3xl font-black text-white uppercase italic tracking-widest">智能标签采集与意向级别矩阵</span>
+                            <span class="text-sm bg-green-500/10 text-green-500 border border-green-500/30 px-6 py-2 rounded-full font-black">AUTO_COLLECTING</span>
+                        </div>
+                        <div class="grid grid-cols-4 gap-10">
+                            <template x-for="row in tagSpec" :key="row.label">
+                                <div class="p-10 glass-panel bg-black/40 flex flex-col gap-8 group hover:border-[#0a9dd866] transition-all">
+                                    <span class="text-xl text-gray-600 font-black uppercase tracking-widest group-hover:text-gray-400 transition-colors" x-text="row.label"></span>
+                                    <div class="flex flex-wrap gap-4">
+                                        <template x-for="val in row.vals" :key="val">
+                                            <span class="text-base bg-white/5 border border-white/10 px-6 py-2 rounded-xl text-gray-400" x-text="val"></span>
+                                        </template>
+                                    </div>
+                                    <div class="mt-4 pt-6 border-t border-white/5 flex justify-between items-center px-2">
+                                        <span @click="notify(`正在对 [${row.label}] 进行人工审计与修正...`, 'info')" class="text-sm text-gray-500 font-bold italic cursor-pointer hover:text-[#0a9dd8] transition-colors">手动修正与补全</span>
+                                        <svg class="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. 系统对接与 ASR 溯源 Tab -->
+                <div x-show="activeTab === 'system'" class="flex-1 p-16 overflow-y-auto custom-scroll space-y-24" x-cloak
+                    x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-20">
+                    <div class="grid grid-cols-3 gap-16">
+                        <div class="p-12 glass-panel bg-black/60 flex flex-col gap-10 text-center hover:scale-105 transition-all">
+                            <div class="w-32 h-32 bg-green-900/10 rounded-full mx-auto flex items-center justify-center text-green-500 border-4 border-green-500/20">
+                                <svg class="w-16 h-16" fill="currentColor" viewBox="0 0 24 24"><path d="M12.5 13c1.9 0 3.5-1.6 3.5-3.5S14.4 6 12.5 6 9 7.6 9 9.5s1.6 3.5 3.5 3.5zm7 7H5c0-4.4 3.6-8 8-8s8 3.6 8 8z"/></svg>
+                            </div>
+                            <h3 class="text-3xl font-black text-white tracking-widest uppercase">企业微信对接</h3>
+                            <p class="text-xl text-gray-600 font-bold">每条 H 级线索实时下发至企微群。</p>
+                            <div class="switch" :class="sys_wechat ? 'on' : ''" @click="sys_wechat = !sys_wechat; notify('企微实时通知状态已变更', 'success')"></div>
+                        </div>
+                        <div class="p-12 glass-panel bg-black/60 flex flex-col gap-10 text-center hover:scale-105 transition-all">
+                            <div class="w-32 h-32 bg-[#0a9dd810] rounded-full mx-auto flex items-center justify-center text-[#0a9dd8] border-4 border-[#0a9dd820]">
+                                <svg class="w-16 h-16" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+                            </div>
+                            <h3 class="text-3xl font-black text-white tracking-widest uppercase">CRM 客户中台对接</h3>
+                            <p class="text-xl text-gray-600 font-bold">全量画像数据双向实时同步。</p>
+                            <div class="switch" :class="sys_crm ? 'on' : ''" @click="sys_crm = !sys_crm; notify('CRM 双向同步链路已更新', 'info')"></div>
+                        </div>
+                        <div class="p-12 glass-panel bg-black/60 flex flex-col gap-10 text-center hover:scale-105 transition-all">
+                            <div class="w-32 h-32 bg-red-900/10 rounded-full mx-auto flex items-center justify-center text-red-500 border-4 border-red-500/20">
+                                <svg class="w-16 h-16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 17a2 2 0 042-2h1a2 2 0 012 2v1a2 2 0 01-2 2H9a2 2 0 01-2-2v-1a2 2 0 012-2h1a2 2 0 002 2zM21 5H3v14h18V5zm-2 12H5V7h14v10z"/></svg>
+                            </div>
+                            <h3 class="text-3xl font-black text-white tracking-widest uppercase">API 加密管理</h3>
+                            <p class="text-xl text-gray-600 font-bold">AES-256 手机号加密批量导入能力。</p>
+                            <button @click="notify('正在生成新的 AES-256 分发密钥...', 'warning')" class="px-10 py-4 bg-red-600/20 border-2 border-red-600/40 text-red-500 rounded-full font-black text-xl hover:bg-red-600 transition-all">配置密钥</button>
+                        </div>
+                    </div>
+
+                    <!-- 动态回调审计流 -->
+                    <div class="p-16 glass-panel border-white/5 bg-black/95 flex flex-col gap-10 shadow-2xl">
+                        <div class="flex justify-between items-center mb-6">
+                            <span class="text-2xl text-gray-700 font-black uppercase tracking-[0.4em] italic pl-10 border-l-8 border-gray-800">实时话务清洗流 (CALLBACK_STREAM)</span>
+                            <div class="flex gap-10">
+                                <span class="text-lg bg-green-500/10 text-green-500 px-6 py-2 rounded-full font-black border border-green-500/20">ASR 在线</span>
+                                <span class="text-lg bg-[#0a9dd810] text-[#0a9dd8] px-6 py-2 rounded-full font-black border border-[#0a9dd820]">录音写入中</span>
+                            </div>
+                        </div>
+                        <div class="flex-1 min-h-[450px] font-mono text-2xl text-green-700 leading-normal p-12 bg-black/20 rounded-[60px] overflow-y-auto custom-scroll border-2 border-white/5">
+                            <div class="mb-4 text-gray-500">[20:46:10] DISPATCH_ENGINE -> TASK_{5822} CREATED SUCCESSFULLY</div>
+                            <div class="mb-4 text-white">[20:46:15] CALLBACK_RESULT -> ID: 15662 | TEL: 186****1022 | INTENT: "H (High)"</div>
+                            <div class="mb-4 text-[#0a9dd8]">[20:46:20] ASR_TEXT -> "我对 A5L 的那个 2.96 米长轴距很满意，那天看到广告说有华为 ADS 3.0，是真的吗？"</div>
+                            <div class="mb-4 text-gray-500">[20:46:25] WECOM_PUSH -> TACTICAL_BOARD_02 ... SENT CONFIRMED</div>
+                            <div class="mb-4 text-yellow-500">[20:46:32] RETRY_MANAGER -> TARGET: "159****2198" BUSY ... SCHEDULED NEXT POOL (T+480s)</div>
+                            <div class="animate-pulse">_</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 全局提示器 -->
+    <div id="os-notif" class="fixed bottom-12 right-12 z-[300] flex flex-col items-end gap-10 px-10 pointer-events-none"></div>
+
+    <script>
+        function callCenter() {
+            return {
+                activeTab: 'tactics',
+                // 战术策略状态
+                s_retry_max: 3,
+                s_retry_interval: 480,
+                s_dedupe: true,
+                s_pause: false,
+                s_transfer: true,
+                s_package: true,
+                
+                // 模型与话术状态
+                m_mode: 'prec', // prec or recall
+                m_training_progress: 78,
+                
+                // 系统对接状态
+                sys_wechat: true,
+                sys_crm: true,
+                sys_api_encryption: true,
+
+                tabs: [
+                    { id: 'tactics', name: '战术策略与分配' },
+                    { id: 'model', name: '意向模型与话术' },
+                    { id: 'system', name: '系统对接与 ASR' }
+                ],
+                timeSlots: [
+                    { region: '一汽奥迪 核心大区', time: '09:00 - 18:00' },
+                    { region: '上汽奥迪 年轻客群区', time: '10:00 - 21:00' },
+                    { region: '策略弹性重呼窗口', time: '12:00 / 17:00' }
+                ],
+                tagSpec: [
+                    { label: '关注点审计', vals: ['长轴距', '华为 ADS 3.0', '无框车门'] },
+                    { label: '预算与意向门店', vals: ['30-40W', '嘉定旗舰店', '安亭基地'] },
+                    { label: '客户所在地', vals: ['上海', '北京', '广东'] },
+                    { label: '意向分极 (Intent)', vals: ['H级 (High)', 'A级', 'B级'] }
+                ],
+                init() {
+                    console.log('Call Center V6.2 Structural Fixed.');
+                    setInterval(() => {
+                        if(this.m_training_progress < 99.5) this.m_training_progress += 0.05;
+                    }, 2000);
+                },
+                notify(msg, type = 'info') {
+                    const container = document.getElementById('os-notif');
+                    const el = document.createElement('div');
+                    const colors = { 
+                        info: 'border-[#0a9dd8] text-[#0a9dd8]', 
+                        success: 'border-green-500 text-green-500',
+                        warning: 'border-red-500 text-red-500' 
+                    };
+                    el.className = `p-12 px-24 glass-panel text-3xl font-black ${colors[type]} transition-all duration-1000 translate-x-40 opacity-0 bg-black/95 shadow-2xl pointer-events-auto rounded-[60px]`;
+                    el.innerHTML = `<span class="opacity-30 mr-8">[配置命令]</span> ${msg}`;
+                    container.appendChild(el);
+                    setTimeout(() => el.classList.remove('translate-x-40', 'opacity-0'), 20);
+                    setTimeout(() => { 
+                        el.classList.add('translate-x-40', 'opacity-0'); 
+                        setTimeout(() => el.remove(), 1000); 
+                    }, 5000);
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

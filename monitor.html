@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>监控中心 - 奥迪 A5L 数字化门户</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        :root {
+            --primary: #0a9dd8;
+            --bg: #111111;
+            --glass: rgba(22, 22, 24, 0.92);
+            --border: rgba(10, 157, 216, 0.45);
+        }
+
+        body {
+            background: var(--bg);
+            color: #e2e8f0;
+            font-family: 'Inter', 'PingFang SC', sans-serif;
+            min-height: 100vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+            font-size: 32px;
+        }
+
+        .grid-bg {
+            position: fixed;
+            inset: 0;
+            background-image: radial-gradient(rgba(10, 157, 216, 0.15) 3px, transparent 3px);
+            background-size: 80px 80px;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .glass-panel {
+            background: var(--glass);
+            border: 3px solid var(--border);
+            backdrop-filter: blur(50px);
+            position: relative;
+            box-shadow: 0 20px 80px rgba(0, 0, 0, 0.9);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .glass-panel::after {
+            content: "";
+            position: absolute;
+            top: -3px;
+            left: -3px;
+            width: 50px;
+            height: 50px;
+            border-top: 6px solid var(--primary);
+            border-left: 6px solid var(--primary);
+            border-radius: 12px 0 0 0;
+        }
+
+        .glow-text {
+            text-shadow: 0 0 40px rgba(10, 157, 216, 1);
+        }
+
+        .metric-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 2px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.4s ease;
+        }
+
+        .chart-axis-text {
+            font-size: 14px;
+            fill: rgba(255, 255, 255, 0.4);
+            font-weight: 800;
+            font-family: monospace;
+        }
+
+        .dynamic-line {
+            transition: d 2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        [x-cloak] {
+            display: none !important;
+        }
+
+        .data-bubble {
+            background: rgba(10, 157, 216, 0.9);
+            color: black;
+            font-weight: 950;
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-size: 16px;
+            position: absolute;
+            transform: translate(-50%, -100%);
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+
+<body x-data="monitorHub()" x-init="init()" class="flex flex-col min-h-screen select-none relative">
+    <div class="grid-bg"></div>
+
+    <!-- 顶栏 (Sticky) -->
+    <header
+        class="h-32 bg-black/70 border-b-2 border-white/10 flex items-center justify-between px-20 z-50 backdrop-blur-3xl sticky top-0 shrink-0">
+        <div class="flex items-center space-x-12">
+            <img src="logo.png" alt="A5L LOGO" class="h-20 w-auto object-contain filter brightness-150">
+            <button onclick="window.history.back()"
+                class="flex items-center px-10 py-4 rounded-[30px] border-2 border-white/15 text-xl text-gray-400 font-black uppercase tracking-widest hover:text-[#0a9dd8] transition-all">
+                返回指挥中心
+            </button>
+            <h1 class="text-3xl font-black tracking-[0.4em] text-[#0a9dd8] glow-text uppercase">全链路实时数据审计控制台</h1>
+        </div>
+        <div class="flex items-center gap-12">
+            <div class="flex flex-col items-end">
+                <span class="text-lg opacity-50 font-bold uppercase tracking-widest">总体负载指数</span>
+                <span class="text-white font-black text-4xl" x-text="`${load}%` "></span>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex-1 flex overflow-hidden p-12 gap-12 z-10">
+        <!-- 左侧：动态精准图表 -->
+        <main class="flex-1 glass-panel flex flex-col p-12 bg-black/60 overflow-hidden">
+            <div class="flex justify-between items-center mb-8">
+                <div class="flex flex-col">
+                    <h2 class="text-4xl font-black text-white glow-text uppercase tracking-widest">系统吞吐速率态势 (BPS/PPS)
+                    </h2>
+                    <p class="text-lg text-[#0a9dd8] font-bold mt-2">REALTIME SENSING: <span x-text="timestamp"></span>
+                    </p>
+                </div>
+                <div class="flex flex-col items-end gap-3">
+                    <div class="flex gap-10">
+                        <span class="text-2xl font-black text-green-500">INGRESS: <span x-text="rxValue"></span>
+                            MB/s</span>
+                        <span class="text-2xl font-black text-[#0a9dd8]">EGRESS: <span x-text="txValue"></span>
+                            MB/s</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- [精修] 带数值的具体图表 -->
+            <div class="flex-1 bg-black/40 rounded-[40px] border-2 border-white/5 relative overflow-hidden p-10 mt-4">
+                <!-- 坐标背景 -->
+                <div class="absolute inset-0 p-16 pointer-events-none">
+                    <div class="w-full h-full border-l-2 border-b-2 border-white/10 flex flex-col justify-between">
+                        <!-- Y轴刻度 -->
+                        <div class="w-full flex justify-between">
+                            <div class="chart-axis-text -ml-16">2048 MB/s</div>
+                            <div class="w-full border-t border-white/5"></div>
+                        </div>
+                        <div class="w-full flex justify-between">
+                            <div class="chart-axis-text -ml-16">1536 MB/s</div>
+                            <div class="w-full border-t border-white/5"></div>
+                        </div>
+                        <div class="w-full flex justify-between">
+                            <div class="chart-axis-text -ml-16">1024 MB/s</div>
+                            <div class="w-full border-t border-white/5"></div>
+                        </div>
+                        <div class="w-full flex justify-between">
+                            <div class="chart-axis-text -ml-16">512 MB/s</div>
+                            <div class="w-full border-t border-white/5"></div>
+                        </div>
+                        <div class="w-full flex justify-between">
+                            <div class="chart-axis-text -ml-16">0</div>
+                            <div class="w-full border-t border-white/5"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <svg class="w-full h-full" viewBox="0 0 800 300" preserveAspectRatio="none">
+                    <defs>
+                        <linearGradient id="chartGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" style="stop-color:rgba(10, 157, 216, 0.4);stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:rgba(10, 157, 216, 0);stop-opacity:0" />
+                        </linearGradient>
+                    </defs>
+                    <!-- [新增] 1800MB/s 安全阈值红线 -->
+                    <line x1="0" y1="35" x2="800" y2="35" stroke="#ef4444" stroke-width="2" stroke-dasharray="8,8" opacity="0.6"></line>
+                    <text x="790" y="30" text-anchor="end" class="chart-axis-text fill-red-500 font-black">CRITICAL_LIMIT: 1800 MB/s</text>
+
+                    <!-- 精准波形线 -->
+                    <path class="dynamic-line" :d="pathData" fill="none" stroke="#0a9dd8" stroke-width="6"
+                        stroke-linecap="round"></path>
+                    <path class="dynamic-line" :d="`${pathData} L800,300 L0,300 Z`" fill="url(#chartGrad)"
+                        stroke="none"></path>
+
+                    <!-- 采样点数值标注 -->
+                    <template x-for="(point, idx) in points" :key="idx">
+                        <g>
+                            <circle :cx="point.x" :cy="point.y" r="6" fill="#0a9dd8" class="animate-pulse"></circle>
+                            <text :x="point.x" :y="point.y - 15" text-anchor="middle"
+                                class="chart-axis-text fill-[#0a9dd8]" x-text="point.val"></text>
+                        </g>
+                    </template>
+                    
+                    <!-- [新增] X 轴时间刻度 -->
+                    <g transform="translate(0, 295)">
+                        <template x-for="i in [0,1,2,3,4,5,6,7,8]" :key="i">
+                            <text :x="i*100" y="0" text-anchor="middle" class="chart-axis-text opacity-40" x-text="`T-${(8-i)*5}s`"></text>
+                        </template>
+                    </g>
+                </svg>
+            </div>
+
+            <!-- 扩展指标网格 -->
+            <div class="grid grid-cols-4 gap-8 mt-12">
+                <template x-for="m in metrics" :key="m.label">
+                    <div class="metric-card p-8 rounded-[40px] flex flex-col gap-4">
+                        <span class="text-xl text-gray-500 font-black uppercase tracking-widest"
+                            x-text="m.label"></span>
+                        <div class="flex items-end justify-between">
+                            <span :class="m.color" class="text-5xl font-black glow-text" x-text="m.value"></span>
+                            <span class="text-xl opacity-40 font-mono font-black" x-text="m.unit"></span>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </main>
+
+        <!-- 右侧：时延分布 (带核心数字) -->
+        <aside class="w-[550px] flex flex-col gap-10">
+            <div class="glass-panel p-10 bg-black/60 flex flex-col flex-1">
+                <h3
+                    class="text-3xl font-black text-white border-l-8 border-[#0a9dd8] pl-8 mb-12 uppercase tracking-widest">
+                    实时延迟统计</h3>
+
+                <div class="space-y-12 flex-1 flex flex-col justify-center">
+                    <div
+                        class="flex justify-between items-center p-8 bg-white/5 border-2 border-white/10 rounded-[50px]">
+                        <span class="text-xl text-gray-400 font-black uppercase">AVG_LATENCY</span>
+                        <div class="flex items-baseline gap-4">
+                            <span class="text-8xl font-black text-white glow-text">880</span>
+                            <span class="text-2xl text-[#0a9dd8] font-black">ms</span>
+                        </div>
+                    </div>
+                    <div
+                        class="flex justify-between items-center p-8 bg-[#0a9dd815] border-2 border-[#0a9dd8] rounded-[50px] relative">
+
+                        <span class="text-xl text-gray-300 font-black uppercase">80% PERCENTILE</span>
+                        <div class="flex items-baseline gap-4">
+                            <span class="text-8xl font-black text-white glow-text">890</span>
+                            <span class="text-2xl text-red-500 font-black">ms</span>
+                        </div>
+                    </div>
+                    <div
+                        class="flex justify-between items-center p-8 bg-white/5 border-2 border-white/10 rounded-[50px]">
+                        <span class="text-xl text-gray-400 font-black uppercase">90% PERCENTILE</span>
+                        <div class="flex items-baseline gap-4">
+                            <span class="text-8xl font-black text-white glow-text">950</span>
+                            <span class="text-2xl text-amber-500 font-black">ms</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-12 p-10 bg-black/80 border-2 border-dashed border-white/10 rounded-[40px]">
+                    <div class="flex items-center gap-6 mb-4">
+                        <div class="w-4 h-4 bg-green-500 rounded-full animate-pulse"></div>
+                        <span class="text-xl text-green-500 font-black uppercase tracking-widest">系统线性平稳度报告</span>
+                    </div>
+                    <div class="text-xl text-gray-500 font-bold leading-relaxed italic">
+                        当前 P90/AVG 偏离值为 7.9% [优]。系统在高并发 A5L 语音交互下表现出极强的鲁棒性，无堆栈溢出风险。
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        function monitorHub() {
+            return {
+                load: 42,
+                rxValue: 1240,
+                txValue: 885,
+                timestamp: '',
+                metrics: [
+                    { label: '线程活跃数', value: '1,024', unit: 'THREADS', color: 'text-white' },
+                    { label: '内存瞬时池', value: '4.2', unit: 'GB', color: 'text-[#0a9dd8]' },
+                    { label: '磁盘 I/O', value: '45.8', unit: 'MB/s', color: 'text-green-500' },
+                    { label: 'API 成功率', value: '99.98', unit: '%', color: 'text-amber-500' }
+                ],
+                points: [],
+                pathData: '',
+                init() {
+                    this.updateData();
+                    setInterval(() => this.updateData(), 3000);
+                },
+                updateData() {
+                    const now = new Date();
+                    this.timestamp = now.toLocaleTimeString();
+                    this.load = 40 + Math.floor(Math.random() * 15);
+                    this.rxValue = 1200 + Math.floor(Math.random() * 400);
+                    this.txValue = 800 + Math.floor(Math.random() * 200);
+
+                    // 生成采样点数据 (X: 坐标, Y: 根据数值映射, Val: 显示的数字)
+                    const newPoints = [];
+                    let d = "M0,150";
+                    for (let i = 0; i <= 8; i++) {
+                        const x = i * 100;
+                        const val = Math.floor(Math.random() * 1500) + 200;
+                        const y = 300 - (val / 2048 * 270); // 映射到 SVG 坐标
+                        newPoints.push({ x, y, val: val + "MB" });
+                        d += ` L${x},${y}`;
+                    }
+                    this.points = newPoints;
+                    this.pathData = d;
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>
